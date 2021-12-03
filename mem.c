@@ -15,8 +15,6 @@
 #define ALIGNMENT 16
 #endif
 
-On fait un petit test de git avec LUCAS
-
 /* structure placée au début de la zone de l'allocateur
 
    Elle contient toutes les variables globales nécessaires au

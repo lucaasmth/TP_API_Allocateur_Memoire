@@ -77,7 +77,7 @@ void mem_init(void* mem, size_t taille)
 }
 
 void mem_show(void (*print)(void *, size_t, int)) {
-	struct fb* bloc = get_system_memory_addr() + sizeof(struct fb);
+	struct fb* bloc = get_system_memory_addr() + sizeof(struct allocator_header);
 	printf("Fin de la mémoire: %ld\n", get_system_memory_size());
 	while (bloc < (struct fb*)(get_system_memory_addr() + get_system_memory_size())) {
 		print(bloc, bloc->size, bloc->free);

@@ -93,19 +93,22 @@ void mem_fit(mem_fit_function_t *f) {
 void* mem_alloc(size_t taille) {
 	struct fb* fb = get_header()->fit(get_header()->first, taille);
 	if(fb == NULL) return NULL;
-	struct fb* newfb = (void*)(fb) + taille + sizeof(struct fb);
-	if(get_header()->first == fb) {
-		get_header()->first = newfb;
-	} else {
-		struct fb* prev = get_header()->first;
-		while(prev != 0) {
-			if(prev->next == fb) break;
-			prev = prev->next;
+	if(taille!=fb->size){
+		struct fb* newfb = (void*)(fb) + taille + sizeof(struct fb);
+		if(get_header()->first == fb) {
+			get_header()->first = newfb;
+		} 
+		else {
+			struct fb* prev = get_header()->first;
+			while(prev != 0) {
+				if(prev->next == fb) break;
+				prev = prev->next;
+			}
+			prev->next = newfb;
 		}
-		prev->next = newfb;
+		newfb->size = fb->size - taille;
+		newfb->free = 1;
 	}
-	newfb->size = fb->size - taille;
-	newfb->free = 1;
 	fb->size = taille;
 	fb->free = 0;
 	return fb;

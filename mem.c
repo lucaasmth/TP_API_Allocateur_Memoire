@@ -113,13 +113,27 @@ void* mem_alloc(size_t taille) {
 
 
 void mem_free(void* mem) {
+	struct fb* bloc_to_free=mem;
+	bloc_to_free->free=1;
+	if(get_header()->first >= bloc_to_free) {
+		bloc_to_free->next=get_header()->first;
+		get_header()->first = bloc_to_free;
+	}
+	else{
+		struct fb* prev = get_header()->first;
+			while(prev < bloc_to_free) {
+				prev = prev->next;
+			}
+		bloc_to_free->next=prev->next;
+		prev->next=bloc_to_free->next;
+	}
 }
 
 
 struct fb* mem_fit_first(struct fb *list, size_t size) {
 	struct fb* bloc = list;
 	while(bloc != 0) {
-		if(bloc->size > size) {
+		if(bloc->size >= size) {
 			return bloc;
 		}
 		bloc = bloc->next;

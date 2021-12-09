@@ -57,8 +57,8 @@ struct fb {
 
 void mem_init(void* mem, size_t taille)
 {
-        memory_addr = mem;
-        *(size_t*)memory_addr = taille;
+	memory_addr = mem;
+	*(size_t*)memory_addr = taille;
 	/* On vérifie qu'on a bien enregistré les infos et qu'on
 	 * sera capable de les récupérer par la suite
 	 */

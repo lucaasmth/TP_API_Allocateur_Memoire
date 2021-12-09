@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <stdio.h>
+
 /* Définition de l'alignement recherché
  * Avec gcc, on peut utiliser __BIGGEST_ALIGNMENT__
  * sinon, on utilise 16 qui conviendra aux plateformes qu'on cible
@@ -23,8 +25,9 @@
    Elle peut bien évidemment être complétée
 */
 struct allocator_header {
-        size_t memory_size;
+    size_t memory_size;
 	mem_fit_function_t *fit;
+	struct fb *first;
 };
 
 /* La seule variable globale autorisée
@@ -51,7 +54,7 @@ static inline size_t get_system_memory_size() {
 struct fb {
 	size_t size;
 	struct fb* next;
-	/* ... */
+	int free;
 };
 
 
@@ -59,21 +62,27 @@ void mem_init(void* mem, size_t taille)
 {
 	memory_addr = mem;
 	*(size_t*)memory_addr = taille;
-	/* On vérifie qu'on a bien enregistré les infos et qu'on
-	 * sera capable de les récupérer par la suite
-	 */
+
+	get_header()->memory_size = taille;
+	get_header()->first = mem + sizeof(struct allocator_header);
+	get_header()->first->size = taille - sizeof(struct allocator_header) - sizeof(struct fb);
+	get_header()->first->next = NULL;
+	get_header()->first->free = 1;
+
 	assert(mem == get_system_memory_addr());
 	assert(taille == get_system_memory_size());
-	/* ... */
+
+	//On défini la fonction de recherche à mem_fit_first par défaut
 	mem_fit(&mem_fit_first);
 }
 
 void mem_show(void (*print)(void *, size_t, int)) {
-	/* ... */
-	while (/* ... */ 0) {
-		/* ... */
-		print(/* ... */NULL, /* ... */0, /* ... */0);
-		/* ... */
+	struct fb* bloc = get_system_memory_addr() + sizeof(struct fb);
+	printf("Fin de la mémoire: %ld\n", get_system_memory_size());
+	while (bloc < (struct fb*)(get_system_memory_addr() + get_system_memory_size())) {
+		print(bloc, bloc->size, bloc->free);
+		//bloc = bloc->next;
+		bloc = (struct fb*)((void*)bloc + bloc->size + sizeof(struct fb));
 	}
 }
 
@@ -81,12 +90,25 @@ void mem_fit(mem_fit_function_t *f) {
 	get_header()->fit = f;
 }
 
-void *mem_alloc(size_t taille) {
-	/* ... */
-	__attribute__((unused)) /* juste pour que gcc compile ce squelette avec -Werror */
-	struct fb *fb=get_header()->fit(/*...*/NULL, /*...*/0);
-	/* ... */
-	return NULL;
+void* mem_alloc(size_t taille) {
+	struct fb* fb = get_header()->fit(get_header()->first, taille);
+	if(fb == NULL) return NULL;
+	struct fb* newfb = (void*)(fb) + taille + sizeof(struct fb);
+	if(get_header()->first == fb) {
+		get_header()->first = newfb;
+	} else {
+		struct fb* prev = get_header()->first;
+		while(prev != 0) {
+			if(prev->next == fb) break;
+			prev = prev->next;
+		}
+		prev->next = newfb;
+	}
+	newfb->size = fb->size - taille;
+	newfb->free = 1;
+	fb->size = taille;
+	fb->free = 0;
+	return fb;
 }
 
 
@@ -95,6 +117,13 @@ void mem_free(void* mem) {
 
 
 struct fb* mem_fit_first(struct fb *list, size_t size) {
+	struct fb* bloc = list;
+	while(bloc != 0) {
+		if(bloc->size > size) {
+			return bloc;
+		}
+		bloc = bloc->next;
+	}
 	return NULL;
 }
 

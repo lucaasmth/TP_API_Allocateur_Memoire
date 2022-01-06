@@ -15,5 +15,6 @@ size_t get_memory_size();
 
 /* function to try to allocate as much as memory as possible */
 void *alloc_max(size_t estimate);
+size_t mem_get_size(void *zone);
 
 #endif

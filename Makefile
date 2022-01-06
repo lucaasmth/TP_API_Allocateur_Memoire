@@ -6,6 +6,7 @@ CC=gcc
 
 CFLAGS+= $(HOST32) -Wall -Werror -std=c99 -g -D_GNU_SOURCE
 CFLAGS+= -DDEBUG
+CFLAGS += -DMEMORY_SIZE=128000
 # pour tester avec ls
 CFLAGS+= -fPIC
 LDFLAGS= $(HOST32)

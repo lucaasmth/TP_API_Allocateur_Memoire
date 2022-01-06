@@ -79,6 +79,7 @@ void mem_init(void* mem, size_t taille)
 void mem_show(void (*print)(void *, size_t, int)) {
 	struct fb* bloc = get_system_memory_addr() + sizeof(struct allocator_header);
 	printf("Fin de la mémoire: %ld\n", get_system_memory_size());
+	printf("Première zone libre: %ld\n", (long int)get_header()->first - (long int)get_system_memory_addr());
 	while (bloc < (struct fb*)(get_system_memory_addr() + get_system_memory_size())) {
 		print(bloc, bloc->size, bloc->free);
 		bloc = (struct fb*)((void*)bloc + bloc->size + sizeof(struct fb));
@@ -128,11 +129,26 @@ void mem_free(void* mem) {
 	}
 	else{
 		struct fb* prev = get_header()->first;
-			while(prev < bloc_to_free) {
-				prev = prev->next;
-			}
+		while(prev->next < bloc_to_free) {
+			prev = prev->next;
+		}
 		bloc_to_free->next=prev->next;
 		prev->next=bloc_to_free->next;
+
+		if((long int)bloc_to_free == (long int)(prev) + prev->size + sizeof(struct fb)) {
+			struct fb* bloc_to_delete = bloc_to_free;
+			printf("Deleting previous block %ld\n", (long int) bloc_to_delete - (long int) get_system_memory_addr());
+			prev->next = bloc_to_delete->next;
+			prev->size = prev->size + sizeof(struct fb) + bloc_to_delete->size;
+			bloc_to_free = prev;
+		}
+	}
+	//On teste si on doit merge deux zones libres l'une à coté de l'autre
+	if((long int)bloc_to_free->next == (long int)(bloc_to_free) + bloc_to_free->size + sizeof(struct fb)) {
+		struct fb* bloc_to_delete = bloc_to_free->next;
+		printf("Deleting next block %ld\n", (long int) bloc_to_delete - (long int) get_system_memory_addr());
+		bloc_to_free->next = bloc_to_delete->next;
+		bloc_to_free->size = bloc_to_free->size + sizeof(struct fb) + bloc_to_delete->size;
 	}
 }
 

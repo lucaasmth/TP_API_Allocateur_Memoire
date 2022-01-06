@@ -109,6 +109,10 @@ void* mem_alloc(size_t taille) {
 		}
 		newfb->size = fb->size - taille - sizeof(struct fb);
 		newfb->free = 1;
+	} else {
+		if(get_header()->first == fb) {
+			get_header()->first = get_header()->first->next;
+		}
 	}
 	fb->size = taille;
 	fb->free = 0;

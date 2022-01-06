@@ -3,3 +3,4 @@
 /memshell
 /test_init
 /.vscode
+libmalloc.so

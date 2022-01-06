@@ -138,14 +138,14 @@ void mem_free(void* mem) {
 
 
 struct fb* mem_fit_first(struct fb *list, size_t size) {
-		struct fb* bloc = list;
-		while(bloc != 0) {
-			if(bloc->size == size ||bloc->size >= size + sizeof(struct fb)) {
-				return bloc;
-			}
-			bloc = bloc->next;
+	struct fb* bloc = list;
+	while(bloc != 0) {
+		if(bloc->size == size || bloc->size >= size + sizeof(struct fb)) {
+			return bloc;
 		}
-		return NULL;
+		bloc = bloc->next;
+	}
+	return NULL;
 }
 
 /* Fonction à faire dans un second temps

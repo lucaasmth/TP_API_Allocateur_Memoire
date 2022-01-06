@@ -81,7 +81,6 @@ void mem_show(void (*print)(void *, size_t, int)) {
 	printf("Fin de la mémoire: %ld\n", get_system_memory_size());
 	while (bloc < (struct fb*)(get_system_memory_addr() + get_system_memory_size())) {
 		print(bloc, bloc->size, bloc->free);
-		//bloc = bloc->next;
 		bloc = (struct fb*)((void*)bloc + bloc->size + sizeof(struct fb));
 	}
 }
@@ -137,7 +136,7 @@ void mem_free(void* mem) {
 struct fb* mem_fit_first(struct fb *list, size_t size) {
 	struct fb* bloc = list;
 	while(bloc != 0) {
-		if(bloc->size >= size) {
+		if(bloc->size >= size+sizeof(struct fb)) {
 			return bloc;
 		}
 		bloc = bloc->next;
@@ -154,10 +153,10 @@ struct fb* mem_fit_first(struct fb *list, size_t size) {
  */
 size_t mem_get_size(void *zone) {
 	/* zone est une adresse qui a été retournée par mem_alloc() */
-
+	struct fb* bloc= zone-sizeof(struct fb);
+	return bloc->size;
 	/* la valeur retournée doit être la taille maximale que
 	 * l'utilisateur peut utiliser dans cette zone */
-	return 0;
 }
 
 /* Fonctions facultatives
@@ -170,3 +169,4 @@ struct fb* mem_fit_best(struct fb *list, size_t size) {
 struct fb* mem_fit_worst(struct fb *list, size_t size) {
 	return NULL;
 }
+

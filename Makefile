@@ -11,7 +11,9 @@ CFLAGS += -DMEMORY_SIZE=128000
 CFLAGS+= -fPIC
 LDFLAGS= $(HOST32)
 TESTS+=test_init
-PROGRAMS=memshell $(TESTS)
+PROGRAMS= memshell $(TESTS)
+tests=$(wildcard *.t)
+tests_bis=$(tests:.t=.test)
 
 .PHONY: clean all test_ls
 
@@ -33,6 +35,16 @@ libmalloc.so: malloc_stub.o
 test_ls: libmalloc.so
 	LD_PRELOAD=./libmalloc.so ls
 
+tests: rm_tests $(tests_bis)
+	cat result_tests
+
+%.test: %.t
+	echo "\n\nTest $* : " >> result_tests & ./memshell < $< >> result_tests
+
+rm_tests:
+	rm -rf result_tests
+	
+
 # nettoyage
 clean:
-	$(RM) *.o $(PROGRAMS) libmalloc.so .*.deps
+	$(RM) *.o $(PROGRAMS) libmalloc.so .*.deps result_tests

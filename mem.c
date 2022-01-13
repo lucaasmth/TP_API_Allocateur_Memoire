@@ -54,7 +54,6 @@ static inline size_t get_system_memory_size() {
 struct fb {
 	size_t size;
 	struct fb* next;
-	int free;
 };
 
 
@@ -67,7 +66,6 @@ void mem_init(void* mem, size_t taille)
 	get_header()->first = mem + sizeof(struct allocator_header);
 	get_header()->first->size = taille - sizeof(struct allocator_header) - sizeof(struct fb);
 	get_header()->first->next = NULL;
-	get_header()->first->free = 1;
 
 	assert(mem == get_system_memory_addr());
 	assert(taille == get_system_memory_size());
@@ -81,9 +79,22 @@ void mem_show(void (*print)(void *, size_t, int)) {
 	printf("Fin de la mémoire: %ld\n", get_system_memory_size());
 	printf("Première zone libre: %ld\n", (long int)get_header()->first - (long int)get_system_memory_addr());
 	while (bloc < (struct fb*)(get_system_memory_addr() + get_system_memory_size())) {
-		print(bloc, bloc->size, bloc->free);
+		print(bloc, bloc->size, is_free(bloc));
 		bloc = (struct fb*)((void*)bloc + bloc->size + sizeof(struct fb));
 	}
+}
+
+int is_free(void* mem) {
+	struct fb* bloc = mem;
+	struct fb* fb = get_header()->first;
+	while(fb != 0) {
+		// printf("Comparing %ld with %ld\n", (long int)bloc - (long int)get_system_memory_addr(), (long int)fb - (long int)get_system_memory_addr());
+		if(fb == bloc) {
+			return 1;
+		}
+		fb = fb->next;
+	}
+	return 0;
 }
 
 void mem_fit(mem_fit_function_t *f) {
@@ -96,7 +107,7 @@ void* mem_alloc(size_t taille) {
 	if(taille != fb->size){
 		struct fb* newfb = (void*)(fb) + taille + sizeof(struct fb);
 		if(get_header()->first == fb) {
-			newfb->next = get_header()->first;
+			newfb->next = get_header()->first->next;
 			get_header()->first = newfb;
 		} 
 		else {
@@ -108,21 +119,18 @@ void* mem_alloc(size_t taille) {
 			prev->next = newfb;
 		}
 		newfb->size = fb->size - taille - sizeof(struct fb);
-		newfb->free = 1;
 	} else {
 		if(get_header()->first == fb) {
 			get_header()->first = get_header()->first->next;
 		}
 	}
 	fb->size = taille;
-	fb->free = 0;
 	return fb;
 }
 
 
 void mem_free(void* mem) {
 	struct fb* bloc_to_free=mem;
-	bloc_to_free->free=1;
 	if(get_header()->first >= bloc_to_free) {
 		bloc_to_free->next=get_header()->first;
 		get_header()->first = bloc_to_free;

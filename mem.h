@@ -10,6 +10,8 @@ void* mem_alloc(size_t size);
 void mem_free(void *ptr);
 void* mem_realloc(void *old, size_t new_size);
 
+int is_free(void *mem);
+
 /* Itération sur le contenu de l'allocateur */
 /* nécessaire pour le mem_shell */
 void mem_show(void (*print)(void *adr, size_t size, int free));

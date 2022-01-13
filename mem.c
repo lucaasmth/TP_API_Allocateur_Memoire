@@ -84,6 +84,7 @@ void mem_show(void (*print)(void *, size_t, int)) {
 	}
 }
 
+// La fonction is_free permet de retourner si un bloc est libre ou non
 int is_free(void* mem) {
 	struct fb* bloc = mem;
 	struct fb* fb = get_header()->first;
@@ -102,10 +103,12 @@ void mem_fit(mem_fit_function_t *f) {
 }
 
 void* mem_alloc(size_t taille) {
-	struct fb* fb = get_header()->fit(get_header()->first, taille);
+	size_t taille_align = (taille + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
+	//printf("Taille allouée (après alignement)%ld\n", taille_align);
+	struct fb* fb = get_header()->fit(get_header()->first, taille_align);
 	if(fb == NULL) return NULL;
-	if(taille != fb->size){
-		struct fb* newfb = (void*)(fb) + taille + sizeof(struct fb);
+	if(taille_align != fb->size){
+		struct fb* newfb = (void*)(fb) + taille_align + sizeof(struct fb);
 		if(get_header()->first == fb) {
 			newfb->next = get_header()->first->next;
 			get_header()->first = newfb;
@@ -118,13 +121,13 @@ void* mem_alloc(size_t taille) {
 			}
 			prev->next = newfb;
 		}
-		newfb->size = fb->size - taille - sizeof(struct fb);
+		newfb->size = fb->size - taille_align - sizeof(struct fb);
 	} else {
 		if(get_header()->first == fb) {
 			get_header()->first = get_header()->first->next;
 		}
 	}
-	fb->size = taille;
+	fb->size = taille_align;
 	return fb;
 }
 
